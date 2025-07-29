@@ -22,6 +22,8 @@ from src.unet import UNet  # Adjust the import based on your project structure
 from src.binary_preprocess import binary_preprocess_audio
 from src.multiclass_preprocess import multiclass_preprocess_audio
 from src.russian_preprocess import russian_preprocess_audio, mel_to_audio
+from src.english_preprocess import english_preprocess_audio, mel_to_audio_eng
+
 
 app = Flask(__name__, template_folder='../frontend')
 
@@ -226,14 +228,14 @@ def predict_english():
         spectrogram = torch.tensor(spectrogram).float().to(device='cpu')
 
         # Step 2: Predict
-        russian_pred_model.eval()
+        english_pred_model.eval()
         with torch.no_grad():
             pred_spectrogram = english_pred_model(spectrogram).cpu().numpy()
 
         pred_spectrogram = np.squeeze(pred_spectrogram)  # (128, 128)
 
         # Step 3: Convert to waveform
-        clean_audio = mel_to_audio(pred_spectrogram)
+        clean_audio = mel_to_audio_eng(pred_spectrogram)
         audio_buf = io.BytesIO()
         sf.write(audio_buf, clean_audio, 16000, format='WAV')
         audio_buf.seek(0)

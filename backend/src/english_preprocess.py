@@ -37,7 +37,7 @@ def english_preprocess_audio(file):
 
 
 
-def mel_to_audio(mel_img, sr=16000, n_fft=1024, target_duration=None, denoise=True):
+def mel_to_audio_eng(mel_img, sr=16000, n_fft=1024, target_duration=None, denoise=True):
     mel_img_db = mel_img * 80 - 80  
 
     if denoise:
