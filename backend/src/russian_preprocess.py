@@ -11,30 +11,34 @@ import io
 
 # AttributeError: 'collections.OrderedDict' object has no attribute 'predict'
 def russian_preprocess_audio(file):
+  
+
+    # Read the uploaded audio file
     audio_bytes = file.read()
-    audio_buffer = io.BytesIO(audio_bytes) #read audio
+    audio_buffer = io.BytesIO(audio_bytes)
 
-
+    # Load with librosa
     y, sr = librosa.load(audio_buffer, sr=None)
 
-    S = librosa.stft(y, n_fft=1024, hop_length=512)
-    S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
+    # Compute mel spectrogram
+    S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=512, n_mels=128)
+    S_dB = librosa.power_to_db(S, ref=np.max)
 
-    S_normalized = 255 * (S_db - S_db.min()) / (S_db.max() - S_db.min())
-    S_normalized = S_normalized.astype(np.uint8)
+    # Normalize to [0, 1]
+    S_norm = np.clip((S_dB + 80) / 80, 0, 1)  # shape: (128, time)
 
+    # Resize or pad to fixed size (128x128)
+    if S_norm.shape[1] < 128:
+        pad_width = 128 - S_norm.shape[1]
+        S_norm = np.pad(S_norm, ((0, 0), (0, pad_width)), mode='constant')
+    else:
+        S_norm = S_norm[:, :128]
 
-    S_color = cv2.applyColorMap(S_normalized, cv2.COLORMAP_VIRIDIS)  # Shape: (freq, time, 3), dtype: uint8
+    # Add channel and batch dimension: (1, 1, 128, 128)
+    S_final = np.expand_dims(S_norm, axis=0)  # (1, 128, 128)
+    S_final = np.expand_dims(S_final, axis=0)  # (1, 1, 128, 128)
 
-
-    S_resized = cv2.resize(S_color, (128, 128), interpolation=cv2.INTER_LINEAR)
-
-
-    S_resized = S_resized.astype(np.float32) / 255.0
-
-    S_final = np.expand_dims(  S_resized, axis=0)
-
-    return S_final 
+    return S_final
 
 
 

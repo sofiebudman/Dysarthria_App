@@ -1,45 +1,48 @@
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from tensorflow import keras
 import numpy as np
 import librosa
 import io
 import cv2 
-from flask import Flask, request, jsonify, render_template
-from transformers import pipeline
 import librosa.display
-import numpy as np
 import matplotlib.pyplot as plt
 import soundfile as sf
-import io
 import base64
 import tempfile
-from flask import request, jsonify
 import torch
 
 from src.unet import UNet  # Adjust the import based on your project structure  
-
-
-
-
 from src.binary_preprocess import binary_preprocess_audio
 from src.multiclass_preprocess import multiclass_preprocess_audio
 from src.russian_preprocess import russian_preprocess_audio, mel_to_audio
 
-
-  # or wherever your model class i
-russian_pred_model = UNet(in_channels=1, out_channels=1, features=[64, 128, 256, 512]).to(device='cpu')
-russian_pred_model.load_state_dict(torch.load('backend/models/unet_russian_pretrained.pth', map_location=torch.device('cpu')))
-
-russian_pred_model.eval()
-
 app = Flask(__name__, template_folder='../frontend')
 
+# Load models with error handling
+try:
+    russian_pred_model = UNet(in_channels=1, out_channels=1, features=[64, 128, 256, 512])
+    russian_pred_model.load_state_dict(torch.load('models/unet_russian_pretrained.pth', map_location=torch.device('cpu')))
+    russian_pred_model.eval()
+    print("Russian model loaded successfully")
+except Exception as e:
+    print(f"Error loading Russian model: {e}")
+    russian_pred_model = None
 
+try:
+    multiclass_pred_model = keras.models.load_model('models/multiclass_pred_model.keras')
+    print("Multiclass model loaded successfully")
+except Exception as e:
+    print(f"Error loading multiclass model: {e}")
+    multiclass_pred_model = None
 
-multiclass_pred_model = keras.models.load_model('backend/models/multiclass_pred_model.keras')
-binaryclass_pred_model = keras.models.load_model('backend/models/dysarthria_model_eng.keras')
-russian_pred_model = torch.load('backend/models/unet_russian_pretrained.pth', map_location=torch.device('cpu'))
+try:
+    binaryclass_pred_model = keras.models.load_model('models/dysarthria_model_eng.keras')
+    print("Binary model loaded successfully")
+except Exception as e:
+    print(f"Error loading binary model: {e}")
+    binaryclass_pred_model = None
+
 '''
 asr_pipeline = pipeline(
     task="automatic-speech-recognition",
@@ -156,48 +159,71 @@ def transcribe_audio(audio_path):
  
 @app.route('/russianpredict', methods=['POST'])
 def predict_russian():
-    if 'audio' not in request.files:
-        return jsonify({'error': 'No audio file provided'}), 400
+    try:
+        if russian_pred_model is None:
+            return jsonify({'error': 'Russian model not loaded'}), 500
+            
+        if 'audio' not in request.files:
+            return jsonify({'error': 'No audio file provided'}), 400
 
-    file = request.files['audio']
+        file = request.files['audio']
 
-    # === Step 1: Preprocess
-    spectrogram = russian_preprocess_audio(file)  # shape (1, 128, 128, 3)
-    spectrogram_np = np.squeeze(spectrogram)  # (128, 128, 3)
-    spectrogram_img = (spectrogram_np * 255).astype(np.uint8)
-    spectrogram_rgb = cv2.cvtColor(spectrogram_img, cv2.COLOR_BGR2RGB)
-    _, spectro_buf = cv2.imencode('.png', spectrogram_rgb)
-    spectro_base64 = base64.b64encode(spectro_buf).decode('utf-8')
+        # === Step 1: Preprocess
+        spectrogram = russian_preprocess_audio(file)  # shape (1, 1, 128, 128)
+        
+        # Create visualization for original spectrogram
+        spectrogram_viz = np.squeeze(spectrogram)  # (128, 128)
+        spectrogram_img = (spectrogram_viz * 255).astype(np.uint8)
+        spectrogram_rgb = cv2.cvtColor(spectrogram_img, cv2.COLOR_BGR2RGB)
+        _, spectro_buf = cv2.imencode('.png', spectrogram_rgb)
+        spectro_base64 = base64.b64encode(spectro_buf).decode('utf-8')
 
-    # === Step 2: Predict clean spectrogram
-    pred_spectrogram = russian_pred_model(spectrogram)  # shape (1, 128, 128)
-    pred_spectrogram = np.squeeze(pred_spectrogram)  # shape (128, 128)
+        # Convert to tensor for model input
+        spectrogram_tensor = torch.tensor(spectrogram).float()
 
-    # === Step 3: Convert predicted spectrogram to waveform
-    clean_audio = mel_to_audio(pred_spectrogram)
-    audio_buf = io.BytesIO()
-    sf.write(audio_buf, clean_audio, 16000, format='WAV')
-    audio_buf.seek(0)
-    audio_base64 = base64.b64encode(audio_buf.read()).decode('utf-8')
 
-    # === Step 4: Plot predicted spectrogram
-    pred_spectrogram_db = pred_spectrogram * 80 - 80
-    fig, ax = plt.subplots()
-    img = librosa.display.specshow(pred_spectrogram_db, sr=16000, x_axis='time', y_axis='mel', ax=ax)
-    ax.set_title('Predicted Clean Spectrogram')
-    fig.colorbar(img, ax=ax, format="%+2.0f dB")
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    plt.close(fig)
-    buf.seek(0)
-    pred_spectro_base64 = base64.b64encode(buf.read()).decode('utf-8')
 
-    # === Step 5: Return everything as base64
-    return jsonify({
+
+        # === Step 2: Predict clean spectrogram
+        pred_spectrogram = russian_pred_model(spectrogram)  # shape (1, 128, 128)
+        pred_spectrogram = np.squeeze(pred_spectrogram)  # shape (128, 128)
+
+        # === Step 3: Convert predicted spectrogram to waveform
+        clean_audio = mel_to_audio(pred_spectrogram)
+        audio_buf = io.BytesIO()
+        sf.write(audio_buf, clean_audio, 16000, format='WAV')
+        audio_buf.seek(0)
+        audio_base64 = base64.b64encode(audio_buf.read()).decode('utf-8')
+
+        # === Step 4: Plot predicted spectrogram
+        pred_spectrogram_db = pred_spectrogram * 80 - 80
+        fig, ax = plt.subplots()
+        img = librosa.display.specshow(pred_spectrogram_db, sr=16000, x_axis='time', y_axis='mel', ax=ax)
+        ax.set_title('Predicted Clean Spectrogram')
+        fig.colorbar(img, ax=ax, format="%+2.0f dB")
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        plt.close(fig)
+        buf.seek(0)
+        pred_spectro_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+        # === Step 5: Return everything as base64
+        '''
+        return jsonify({
+            'spectrogram_image': spectro_base64,
+            'predicted_spectrogram_image': pred_spectro_base64,
+            'clean_audio': audio_base64
+        })'''
+        # === Step 5: Return everything as base64
+   
+        return jsonify({
         'spectrogram_image': spectro_base64,
         'predicted_spectrogram_image': pred_spectro_base64,
         'clean_audio': audio_base64
-    })
+        })
+    except Exception as e:
+        print("Internal server error:", str(e))
+        return jsonify({'error': str(e)}), 500
 
 
 
