@@ -17,16 +17,29 @@ import tempfile
 from flask import request, jsonify
 import torch
 
+from src.unet import UNet  # Adjust the import based on your project structure  
+
+
+
+
 from src.binary_preprocess import binary_preprocess_audio
 from src.multiclass_preprocess import multiclass_preprocess_audio
 from src.russian_preprocess import russian_preprocess_audio, mel_to_audio
+
+
+  # or wherever your model class i
+russian_pred_model = UNet(in_channels=1, out_channels=1, features=[64, 128, 256, 512]).to(device='cpu')
+russian_pred_model.load_state_dict(torch.load('backend/models/unet_russian_pretrained.pth', map_location=torch.device('cpu')))
+
+russian_pred_model.eval()
+
 app = Flask(__name__, template_folder='../frontend')
 
 
 
 multiclass_pred_model = keras.models.load_model('backend/models/multiclass_pred_model.keras')
 binaryclass_pred_model = keras.models.load_model('backend/models/dysarthria_model_eng.keras')
-#russian_pred_model = torch.load('backend/models/unet_russian_pretrained.pth')
+russian_pred_model = torch.load('backend/models/unet_russian_pretrained.pth', map_location=torch.device('cpu'))
 '''
 asr_pipeline = pipeline(
     task="automatic-speech-recognition",
@@ -105,35 +118,31 @@ def multiclass_predict():
         highest_class = "Very Low Dysarthria"
     
     return jsonify({'prediction': highest_class})
-
-
 @app.route('/binarypredict', methods=['POST'])
 def binary_predict():
     if 'audio' not in request.files:
         return jsonify({'error': 'No audio file provided'}), 400
     
     audio_file = request.files['audio']
-    
-    # Preprocess audio to get features for model input
 
-    features = binary_preprocess_audio(audio_file)
-    #features = np.expand_dims(features, axis=0)
-    
-    # Run prediction
-    preds = binaryclass_pred_model.predict(features)
-    
-    # Convert prediction output to list for JSON
-    preds_list = preds.tolist()
-    
-    highest_class = int(preds.argmax(axis=1)[0])
-    output = ""
-    if(highest_class == 0):
-        highest_class = "No Dysarthria Present"
-    elif(highest_class == 1):
-        highest_class = "Dysarthria Present"
-    
-    
-    return jsonify({'prediction': highest_class})
+    # Preprocess audio
+    features = binary_preprocess_audio(audio_file)  # shape: (1, 16, 8, 1)
+
+    # Predict
+    pred = binaryclass_pred_model.predict(features)
+    prob = float(pred[0][0])  # Get the raw sigmoid output
+
+    if prob >= 0.5:
+        label = "Dysarthria Present"
+    else:
+        label = "No Dysarthria Present"
+
+    return jsonify({
+        'prediction': label,
+        'confidence': round(prob, 3)
+    })
+
+
 
 @app.route('/emotionenglishpredict', methods=['POST'])
 def transcribe_audio(audio_path):
@@ -161,7 +170,7 @@ def predict_russian():
     spectro_base64 = base64.b64encode(spectro_buf).decode('utf-8')
 
     # === Step 2: Predict clean spectrogram
-    pred_spectrogram = russian_pred_model.predict(spectrogram)  # shape (1, 128, 128)
+    pred_spectrogram = russian_pred_model(spectrogram)  # shape (1, 128, 128)
     pred_spectrogram = np.squeeze(pred_spectrogram)  # shape (128, 128)
 
     # === Step 3: Convert predicted spectrogram to waveform

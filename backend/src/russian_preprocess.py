@@ -7,7 +7,9 @@ import librosa
 import numpy as np
 import io
 
+#TODO: FIX PREPROCESSING
 
+# AttributeError: 'collections.OrderedDict' object has no attribute 'predict'
 def russian_preprocess_audio(file):
     audio_bytes = file.read()
     audio_buffer = io.BytesIO(audio_bytes) #read audio
