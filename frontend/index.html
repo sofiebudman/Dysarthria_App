@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<h1>Dysarthria Diagnosis App</h1>
+<p>
+    In this project, our goal is to use machine learning to detect dysarthria from speech across three different languages, 
+    to classify its severity using spectrogram data, detect the emotion of a signal, and see if we can convert a dysarthric 
+    speech signal to nondysarthric speech using generative models. This could aid clinicians in both diagnosis and ongoing assessment.  
+
+</p>
+<h5>Diagnose Dysarthria</h5>
+<button onclick="openBinary()">Binary Classification</button> 
+<script>
+  function openBinary() {
+    window.location.href = "{{ url_for('classification') }}";
+  }
+</script>
+
+<h5>Determined Dysarthria Severity</h5>
+<button onclick="openSeverity()">Severity Classification</button> 
+<script>
+  function openSeverity() {
+    window.location.href = "{{ url_for('multiclass') }}";
+  }
+</script>
+
+<h5>English Speech to Text, Voice Cloning, Emotion Detection</h5>
+<button onclick="openEnglish()">English</button> 
+<script>
+  function openEnglish() {
+    window.location.href = "{{ url_for('english') }}";
+  }
+</script>
+
+<h5>Russian Clean Speech Generation</h5>
+<button onclick="openRussian()">Russian</button> 
+<script>
+  function openRussian() {
+    window.location.href = "{{ url_for('russian') }}";
+  }
+</script>
+
+
+
+
+</html>
