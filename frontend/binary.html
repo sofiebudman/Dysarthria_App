@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<h1>Dysarthria Detection</h1>
+
+<p>Upload an audio file to predict whether dysarthria is present.</p>
+
+ <form id="audioForm" enctype="multipart/form-data">
+    <input type="file" id="audioFile" name="audio" accept="audio/wav" required>
+    <button type="submit">Predict</button>
+</form>
+
+ <p id="output" style="font-weight: bold; margin-top: 20px;"></p>
+
+<script>
+   
+    const form = document.getElementById('audioForm');
+    const output = document.getElementById('output');
+
+    form.onsubmit = async (event) => {
+      event.preventDefault(); 
+
+      const fileInput = document.getElementById('audioFile');
+      if (fileInput.files.length === 0) {
+        output.textContent = 'Please select an audio file.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('audio', fileInput.files[0]);
+
+      output.textContent = 'Predicting...'; 
+
+      try {
+       
+        const response = await fetch('/binarypredict', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          output.textContent = 'Error: ' + (errorData.error || 'Something went wrong');
+          return;
+        }
+
+        const data = await response.json();
+        output.textContent = 'Prediction: ' + data.prediction;
+      } catch (error) {
+        output.textContent = 'Error: ' + error.message;
+      }
+    };
+  </script>
+</body>
+</html>
