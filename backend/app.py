@@ -27,7 +27,7 @@ app = Flask(__name__, template_folder='../frontend')
 multiclass_pred_model = keras.models.load_model('backend/models/multiclass_pred_model.keras')
 binaryclass_pred_model = keras.models.load_model('backend/models/dysarthria_model_eng.keras')
 #russian_pred_model = torch.load('backend/models/unet_russian_pretrained.pth')
-
+'''
 asr_pipeline = pipeline(
     task="automatic-speech-recognition",
     model="./whisper-finetuned",        # Local folder path
@@ -35,7 +35,7 @@ asr_pipeline = pipeline(
     feature_extractor="./whisper-finetuned",  # Important for audio
     framework="pt"
 )
-
+'''
 
 @app.route('/')
 def home():

@@ -6,3 +6,6 @@ env/
 
 # macOS system files
 .DS_Store
+backend/src/__pycache__/binary_preprocess.cpython-312.pyc
+backend/src/__pycache__/multiclass_preprocess.cpython-312.pyc
+backend/src/__pycache__/russian_preprocess.cpython-312.pyc

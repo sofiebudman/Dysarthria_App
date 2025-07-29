@@ -1,10 +1,9 @@
-<<<<<<< Updated upstream
+
 import io
 import cv2 
 import librosa
 import numpy as np
-def russain_preprocess_audio(file):
-=======
+
 import numpy as np
 import librosa
 import io
@@ -12,7 +11,7 @@ import cv2  # OpenCV for color mapping and resizing
 
 
 def multiclass_preprocess_audio(file):
->>>>>>> Stashed changes
+
     audio_bytes = file.read()
     audio_buffer = io.BytesIO(audio_bytes) #read audio
 
@@ -36,8 +35,6 @@ def multiclass_preprocess_audio(file):
 
     S_final = np.expand_dims(  S_resized, axis=0)
 
-<<<<<<< Updated upstream
+
     return S_final
-=======
-    return S_final
->>>>>>> Stashed changes
+
