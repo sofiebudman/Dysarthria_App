@@ -1,14 +1,14 @@
 import cv2
 from IPython.display import Audio
 import soundfile as sf
-
 import librosa
-
 import scipy.ndimage
 import librosa
 import numpy as np
 import io
-def preprocess_audio(file):
+
+
+def russian_preprocess_audio(file):
     audio_bytes = file.read()
     audio_buffer = io.BytesIO(audio_bytes) #read audio
 
@@ -62,4 +62,3 @@ def mel_to_audio(mel_img, sr=16000, n_fft=1024, target_duration=None, denoise=Tr
         wav = librosa.resample(wav, orig_sr=sr, target_sr=int(sr * stretch_factor))
 
     return wav
-
