@@ -45,7 +45,40 @@ def preprocess_audio(file):
 @app.route('/')
 def home():
     #return "Flask backend for audio prediction running."
+    return render_template("index.html")
+
+@app.route('/multiclass')
+def multiclass():
     return render_template("multiclass.html")
+
+@app.route('/classification')
+def classification():
+    return render_template("binary.html")
+
+@app.route('/english')
+def english():
+    return render_template("english.html")
+@app.route('/russian')
+def russian():
+    return render_template("russian.html")
+
+'''
+HOME: description of app + menu : app route = / (SOFIE)
+BINARY CLASSIFICATION PAGE: app route = /classification (ananya)
+SEVERITY PREDICTION PAGE: app route = /multiclass_classification (SOFIE)
+ENGLISH app route = /english
+Speech to text english (nithika)
+Voice cloning (needs normal audio as well) (nithika)
+Clean speech generation english - output spectogram (ananya)
+Emotion detection english (nithika)
+
+
+RUSSIAN app route = /russian
+Clean speech generation Russian (ANISHA)
+
+'''
+
+
 
 @app.route('/predict', methods=['POST'])
 def predict():
