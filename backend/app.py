@@ -5,13 +5,10 @@ import numpy as np
 import librosa
 import io
 import cv2 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 #from flask import Flask
 
-app = Flask(__name__)
-
-
-
+app = Flask(__name__, template_folder='../frontend')
 
 
 
@@ -47,7 +44,8 @@ def preprocess_audio(file):
 
 @app.route('/')
 def home():
-    return "Flask backend for audio prediction running."
+    #return "Flask backend for audio prediction running."
+    return render_template("multiclass.html")
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -67,7 +65,18 @@ def predict():
     # Convert prediction output to list for JSON
     preds_list = preds.tolist()
     
-    return jsonify({'prediction': preds_list})
+    highest_class = int(preds.argmax(axis=1)[0])
+    output = ""
+    if(highest_class == 0):
+        highest_class = "High Dysarthria"
+    elif(highest_class == 1):
+        highest_class = "Low Dysarthria"
+    elif(highest_class == 2):
+        highest_class = "Medium Dysarthria"
+    elif(highest_class == 3):
+        highest_class = "Very Low Dysarthria"
+    
+    return jsonify({'prediction': highest_class})
 
 if __name__ == '__main__':
     app.run(debug=False, use_reloader=False)
