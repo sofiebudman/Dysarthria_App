@@ -36,7 +36,7 @@ russian_pred_model.load_state_dict(torch.load('backend/models/unet_russian_pretr
 russian_pred_model.eval()
 
 english_pred_model = UNet(in_channels=1, out_channels=1, features=[64, 128, 256, 512])
-english_pred_model.load_state_dict(torch.load('backend/models/unet_english_clean.pth', map_location=torch.device('cpu')))
+english_pred_model.load_state_dict(torch.load('backend/models/unet_english_clean2.pth', map_location=torch.device('cpu')))
 english_pred_model.eval()
 
 '''
