@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speech to Text + Emotion Analyzer</title>
+</head>
+
+<body>
+  <h1>Speech to Text + Emotion Analysis</h1>
+  <p>Upload an English audio file (.wav) to get its transcription and emotion prediction.</p>
+
+  <!-- Upload Form -->
+  <form id="audioFormS2T" enctype="multipart/form-data">
+    <input type="file" id="audioFileS2T" name="audio2" accept="audio/wav" required>
+    <button type="submit">Predict</button>
+  </form>
+
+  <!-- Status / Errors -->
+  <p id="outputS2T" style="font-weight: bold; margin-top: 20px;"></p>
+
+  <!-- Result Area -->
+  <div id="resultsS2T" style="display: none; margin-top: 20px;">
+    <h3>Speech to Text</h3>
+    <p id="speechToText"></p>
+
+    <h3>Emotion Result</h3>
+    <p id="emotionResult"></p>
+  </div>
+
+  <!-- Script -->
+  <script>
+    const formS2T = document.getElementById('audioFormS2T');
+    const fileInput = document.getElementById('audioFileS2T');
+    const outputS2T = document.getElementById('outputS2T');
+    const resultsS2T = document.getElementById('resultsS2T');
+    const speechToText = document.getElementById('speechToText');
+    const emotionResult = document.getElementById('emotionResult');
+
+    formS2T.onsubmit = async (event) => {
+      event.preventDefault();
+
+      if (fileInput.files.length === 0) {
+        outputS2T.textContent = 'Please select an audio file.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('audio2', fileInput.files[0]);
+
+      outputS2T.textContent = 'Processing...';
+      resultsS2T.style.display = 'none';
+
+      try {
+        const response = await fetch('/textemotionpredict', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          outputS2T.textContent = 'Error: ' + (errorData.error || 'Something went wrong');
+          return;
+        }
+
+        const data = await response.json();
+        speechToText.textContent = data.speech_to_text;
+        emotionResult.textContent = data.emotion;
+
+        outputS2T.textContent = 'Success! See results below.';
+        resultsS2T.style.display = 'block';
+      } catch (error) {
+        outputS2T.textContent = 'Error: ' + error.message;
+      }
+    };
+  </script>
+</body>
+</html>

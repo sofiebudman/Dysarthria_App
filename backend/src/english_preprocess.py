@@ -24,7 +24,7 @@ def english_preprocess_audio(file):
     resized = F.interpolate(tensor, size=(128, 128), mode='bilinear', align_corners=False)
     cropped = resized.squeeze().numpy()  # shape (128, 128)
 
-    return cropped[np.newaxis, np.newaxis, :, :], full_S_norm
+    return cropped[np.newaxis, np.newaxis, :, :], full_S_norm, y
 
 import librosa
 import numpy as np

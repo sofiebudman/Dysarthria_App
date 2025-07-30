@@ -10,7 +10,7 @@ import librosa.display
 import matplotlib
 import tensorflow as tf
 
-#from src.speech_to_emotion import text_to_speech_emotion
+from src.speech_to_emotion import text_to_speech_emotion
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -19,9 +19,10 @@ import soundfile as sf
 import base64
 import tempfile
 import torch
+import torchaudio
 
 import keras
-
+import ffmpeg
 from src.unet import UNet  # Adjust the import based on your project structure  
 from src.binary_preprocess import binary_preprocess_audio
 from src.multiclass_preprocess import multiclass_preprocess_audio
@@ -30,6 +31,13 @@ from src.english_preprocess import english_preprocess_audio, mel_to_audio_eng
 
 from transformers import pipeline
 
+asr_pipeline = pipeline(
+    task="automatic-speech-recognition",
+    model="backend/models/whisper-finetuned",        # Local folder path
+    tokenizer="backend/models/whisper-finetuned",    # Same folder
+    feature_extractor="backend/models/whisper-finetuned",  # Important for audio
+    framework="pt"
+)
 
 app = Flask(__name__, template_folder='../frontend')
 
@@ -49,15 +57,8 @@ english_pred_model.load_state_dict(torch.load('backend/models/unet_english_clean
 english_pred_model.eval()
 
 
-'''
-asr_pipeline = pipeline(
-    task="automatic-speech-recognition",
-    model="backend/models/whisper-finetuned",        # Local folder path
-    tokenizer="backend/models/whisper-finetuned",    # Same folder
-    feature_extractor="backend/models/whisper-finetuned",  # Important for audio
-    framework="pt"
-)
-'''
+
+
 
 
 @app.route('/')
@@ -75,10 +76,13 @@ def classification():
 
 @app.route('/english')
 def english():
-    return render_template("english.html")
+    return render_template("englishS2S.html")
 @app.route('/russian')
 def russian():
     return render_template("russian.html")
+@app.route('/emotion')
+def emotion():
+    return render_template("englishS2T.html")
 
 '''
 HOME: description of app + menu : app route = / (SOFIE)
@@ -181,16 +185,6 @@ def binary_predict():
     })
 
 
-'''
-@app.route('/emotionenglishpredict', methods=['POST'])
-def transcribe_audio(audio_path):
-    result = asr_pipeline(audio_path)
-    # 2. TEXT → EMOTION (Zero-Shot Classification)
-    emotion_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli", framework="pt")
-    emotions = ["happy", "sad", "angry", "neutral", "fearful", "disgusted", "surprised"]
-    result = emotion_classifier(result["text"], candidate_labels=emotions)
-    return result["labels"][0], result  # top emotion & confidence
-'''
 
 
 @app.route('/russianpredict', methods=['POST'])
@@ -278,7 +272,7 @@ def predict_english():
         original_base64 = base64.b64encode(original_buf.read()).decode('utf-8')
 
         # Step 1: Preprocess
-        spectrogram, original_spectrogram = english_preprocess_audio(file)
+        spectrogram, original_spectrogram, y = english_preprocess_audio(file)
         spectrogram_tensor = torch.tensor(spectrogram).float().to(device='cpu')
 
         # Step 2: Predict
@@ -320,26 +314,44 @@ def predict_english():
         buf2.seek(0)
         pred_base64 = base64.b64encode(buf2.read()).decode('utf-8')
 
-        
-
-        #EMOTION DETECTION
-        '''
-        file = request.files['audio']
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-            file.save(tmp.name)
-        audio_path = tmp.name
-        text, emotion_result = text_to_speech_emotion(audio_path, asr_pipeline)
-        '''
-
         return jsonify({
             'spectrogram_image': input_base64,
             'predicted_spectrogram_image': pred_base64,
             'clean_audio': audio_base64,
             'original_audio': original_base64
-            #'speech to text': text,
-            #'emotion': emotion_result
+        })
+
+    except Exception as e:
+        print("INTERNAL ERROR:", e)
+        return jsonify({'error': str(e)}), 500
 
 
+import matplotlib
+matplotlib.use('Agg') 
+import matplotlib.pyplot as plt
+@app.route('/textemotionpredict', methods=['POST'])
+def predict_text_emotion():
+    try:
+        if 'audio2' not in request.files:
+            return jsonify({'error': 'No audio file provided'}), 400
+        file = request.files['audio2']
+
+        # Step 0: Read original audio file
+        file_bytes = file.read()
+        file.seek(0)  # reset pointer for reuse
+        audio_data, sr = sf.read(io.BytesIO(file_bytes))
+        original_buf = io.BytesIO()
+        sf.write(original_buf, audio_data, sr, format='WAV')
+        original_buf.seek(0)
+        original_base64 = base64.b64encode(original_buf.read()).decode('utf-8')
+
+        # Step 1: Preprocess
+        spectrogram, original_spectrogram, y = english_preprocess_audio(file)
+        emotion_result, text = text_to_speech_emotion(y, asr_pipeline)
+        clean_text = text['sequence'].split('.jpg')[0].strip()
+        return jsonify({
+            'speech_to_text': clean_text,
+            'emotion': emotion_result
         })
 
     except Exception as e:
