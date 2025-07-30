@@ -1,4 +1,5 @@
 
+import cv2
 from flask import Flask, request, jsonify, render_template
 
 
@@ -7,6 +8,9 @@ import librosa
 import io
 import librosa.display
 import matplotlib
+import tensorflow as tf
+
+#from src.speech_to_emotion import text_to_speech_emotion
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -24,12 +28,14 @@ from src.multiclass_preprocess import multiclass_preprocess_audio
 from src.russian_preprocess import russian_preprocess_audio, mel_to_audio
 from src.english_preprocess import english_preprocess_audio, mel_to_audio_eng
 
+from transformers import pipeline
+
 
 app = Flask(__name__, template_folder='../frontend')
 
 from keras.models import load_model
 
-multiclass_pred_model = load_model('backend/models/multiclass_pred_model.keras', compile=False)
+multiclass_pred_model = load_model('backend/models/multiclass_pred_model.keras', compile=True)
 
 binaryclass_pred_model = keras.models.load_model('backend/models/dysarthria_model_eng.keras')
 
@@ -42,15 +48,17 @@ english_pred_model = UNet(in_channels=1, out_channels=1, features=[64, 128, 256,
 english_pred_model.load_state_dict(torch.load('backend/models/unet_english_clean2.pth', map_location=torch.device('cpu')))
 english_pred_model.eval()
 
+
 '''
 asr_pipeline = pipeline(
     task="automatic-speech-recognition",
-    model="./whisper-finetuned",        # Local folder path
-    tokenizer="./whisper-finetuned",    # Same folder
-    feature_extractor="./whisper-finetuned",  # Important for audio
+    model="backend/models/whisper-finetuned",        # Local folder path
+    tokenizer="backend/models/whisper-finetuned",    # Same folder
+    feature_extractor="backend/models/whisper-finetuned",  # Important for audio
     framework="pt"
 )
 '''
+
 
 @app.route('/')
 def home():
@@ -92,34 +100,62 @@ Clean speech generation Russian (ANISHA)
 
 @app.route('/multiclasspredict', methods=['POST'])
 def multiclass_predict():
+      # Build the model
+    last_conv_layer_name = 'conv2d_2' 
     if 'audio' not in request.files:
         return jsonify({'error': 'No audio file provided'}), 400
     
     audio_file = request.files['audio']
     
     # Preprocess audio to get features for model input
-
     features = multiclass_preprocess_audio(audio_file)
-    #features = np.expand_dims(features, axis=0)
+
     
     # Run prediction
     preds = multiclass_pred_model.predict(features)
     
-    # Convert prediction output to list for JSON
-    preds_list = preds.tolist()
-    
+    # Get the class with the highest probability
     highest_class = int(preds.argmax(axis=1)[0])
-    output = ""
+
+    label = ""
     if(highest_class == 0):
-        highest_class = "High Dysarthria"
+        label = "High Dysarthria"
     elif(highest_class == 1):
-        highest_class = "Low Dysarthria"
+        label = "Low Dysarthria"
     elif(highest_class == 2):
-        highest_class = "Medium Dysarthria"
+        label = "Medium Dysarthria"
     elif(highest_class == 3):
-        highest_class = "Very Low Dysarthria"
+        label = "Very Low Dysarthria"
+
+        last_conv_layer_name = 'conv2d_2'  # Make sure this matches your model's layer
+
+    '''
+    dummy_input = tf.zeros((1, 128, 128, 3))
+    _ =  multiclass_pred_model(dummy_input)
+   
+    heatmap = make_gradcam_heatmap(features, multiclass_pred_model, last_conv_layer_name, pred_index=highest_class)
+
+
+
+    original_img = features[0]  # Shape: (128, 128, 3)
+    heatmap_resized = cv2.resize(heatmap, (original_img.shape[1], original_img.shape[0]))
+    heatmap_blurred = cv2.GaussianBlur(heatmap_resized, (25, 25), 0)
+
+
+    heatmap_rgb = cv2.applyColorMap(np.uint8(255 * heatmap_blurred), cv2.COLORMAP_JET)
+    superimposed_img = cv2.addWeighted(np.uint8(original_img * 255), 0.6, heatmap_rgb, 0.4, 0)
+
+
+    _, buffer = cv2.imencode('.png', superimposed_img)
+    img_base64 = base64.b64encode(buffer).decode('utf-8')
+    '''
+
+    return jsonify({
+        'prediction': label
+        #'heatmap_image': img_base64
+    })
     
-    return jsonify({'prediction': highest_class})
+
 @app.route('/binarypredict', methods=['POST'])
 def binary_predict():
     if 'audio' not in request.files:
@@ -225,12 +261,9 @@ def predict_english():
     try:
         if 'audio' not in request.files:
             return jsonify({'error': 'No audio file provided'}), 400
-
-        
         file = request.files['audio']
 
         # Step 0: Read original audio file
-
         file_bytes = file.read()
         file.seek(0)  # reset pointer for reuse
         audio_data, sr = sf.read(io.BytesIO(file_bytes))
@@ -258,8 +291,6 @@ def predict_english():
         audio_buf.seek(0)
         audio_base64 = base64.b64encode(audio_buf.read()).decode('utf-8')
 
-
-
         # Step 4: Plot full input spectrogram (not cropped one!)
         input_dB = original_spectrogram * 80 - 80
         fig1, ax1 = plt.subplots()
@@ -284,11 +315,25 @@ def predict_english():
         buf2.seek(0)
         pred_base64 = base64.b64encode(buf2.read()).decode('utf-8')
 
+        
+
+        #EMOTION DETECTION
+        '''
+        file = request.files['audio']
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            file.save(tmp.name)
+        audio_path = tmp.name
+        text, emotion_result = text_to_speech_emotion(audio_path, asr_pipeline)
+        '''
+
         return jsonify({
             'spectrogram_image': input_base64,
             'predicted_spectrogram_image': pred_base64,
             'clean_audio': audio_base64,
-            'original_audio': original_base64 
+            'original_audio': original_base64
+            #'speech to text': text,
+            #'emotion': emotion_result
+
 
         })
 

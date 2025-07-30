@@ -30,6 +30,10 @@
  
   <h3>Clean Audio</h3>
   <audio id="cleanAudio" controls></audio>
+
+
+
+
 </div>
 
 <script>
@@ -40,6 +44,7 @@
   const predictedImg = document.getElementById('predictedSpectrogram');
   const cleanAudio = document.getElementById('cleanAudio');
   const originalAudio = document.getElementById('originalAudio');
+  
 
 
 
@@ -76,7 +81,7 @@
       predictedImg.src = 'data:image/png;base64,' + data.predicted_spectrogram_image;
       cleanAudio.src = 'data:audio/wav;base64,' + data.clean_audio;
       originalAudio.src = 'data:audio/wav;base64,' + data.original_audio;
-
+      
       output.textContent = 'Success! See results below.';
       results.style.display = 'block';
 
