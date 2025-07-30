@@ -3,80 +3,102 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>English Speech to Text and Emotion</title>
+  <title>Speech to Text & Emotion Analysis</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-white text-gray-800 font-sans min-h-screen flex flex-col justify-between">
 
-  <header class="bg-white shadow py-6 mb-10">
-    <h1 class="text-4xl font-extrabold text-blue-600 text-center">Speech to Text & Emotion Analysis</h1>
-    <p class="text-center mt-2 text-gray-600 text-lg">
-      Upload an English audio file (.wav) to get its transcription and emotion prediction.
-    </p>
+  <!-- Header -->
+  <header class="bg-white shadow-lg py-8 mb-8">
+    <div class="text-center">
+      <h1 class="text-5xl font-black text-blue-600 flex items-center justify-center gap-2">
+      
+        Speech to Text & Emotion Analysis
+      </h1>
+      <p class="mt-3 text-gray-600 text-lg">
+        Upload an English WAV audio file to get transcription and emotion prediction.
+      </p>
+    </div>
   </header>
 
-  <form id="audioForm" enctype="multipart/form-data" class="flex flex-col items-center space-y-4 p-6 bg-white shadow-lg rounded-xl max-w-md mx-auto">
-    <label for="audioFile" class="text-lg font-medium text-gray-700">Upload a WAV file:</label>
-    <input 
-      type="file" 
-      id="audioFile" 
-      name="audio" 
-      accept="audio/wav" 
-      required
-      class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 
-             file:rounded-full file:border-0 
-             file:text-sm file:font-semibold 
-             file:bg-blue-50 file:text-blue-700 
-             hover:file:bg-blue-100"
+  <!-- Form -->
+  <main class="flex-grow">
+    <form 
+      id="audioForm"
+      enctype="multipart/form-data"
+      class="flex flex-col items-center gap-6 p-8 bg-white shadow-xl rounded-2xl max-w-lg mx-auto animate-fade-in"
     >
-    <button 
-      type="submit" 
-      class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"
-    >
-      Predict
-    </button>
-    <p id="output" class="font-semibold text-center text-blue-600 mt-2"></p>
-  </form>
+      <label for="audioFile" class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+        <i class="ph ph-upload-simple text-blue-600 text-2xl"></i>
+        Upload a WAV file:
+      </label>
+      <input 
+        type="file" 
+        id="audioFile" 
+        name="audio2" 
+        accept="audio/wav" 
+        required
+        class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 
+               file:rounded-full file:border-0 
+               file:text-sm file:font-semibold 
+               file:bg-blue-100 file:text-blue-800 
+               hover:file:bg-blue-200 transition"
+      >
+      <button 
+        type="submit" 
+        class="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-full shadow-md hover:bg-blue-700 transition duration-300"
+      >
+        <i class="ph ph-magic-wand text-xl"></i>
+        Predict
+      </button>
+    </form>
 
-  <div class="max-w-xl mx-auto mt-10 px-6">
-    <p id="outputS2T" class="text-center text-lg font-semibold text-blue-700"></p>
+    <!-- Output -->
+    <section class="max-w-2xl mx-auto px-6 mt-10 text-center">
+      <p id="output" class="text-xl font-semibold text-blue-700 mb-6"></p>
 
-    <div id="resultsS2T" class="mt-6 hidden bg-white p-6 rounded-xl shadow-lg">
-      <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Results</h3>
-
-      <div class="mb-4">
-        <h4 class="text-lg font-semibold text-gray-700">Speech to Text:</h4>
-        <p id="speechToText" class="text-gray-900 mt-1"></p>
+      <div id="results" class="hidden bg-white p-6 rounded-2xl shadow-lg text-left space-y-4 max-w-xl mx-auto">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-700">Speech to Text:</h3>
+          <p id="speechToText" class="text-gray-900 mt-1"></p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-700">Emotion Detected:</h3>
+          <p id="emotionResult" class="text-gray-900 mt-1"></p>
+        </div>
       </div>
+    </section>
+  </main>
 
-      <div>
-        <h4 class="text-lg font-semibold text-gray-700">Emotion Detected:</h4>
-        <p id="emotionResult" class="text-gray-900 mt-1"></p>
-      </div>
-    </div>
-  </div>
+  <!-- Footer -->
+  <footer class="text-center text-sm text-gray-500 py-6 mt-8">
+    Built with TailwindCSS & JavaScript
+  </footer>
 
+  <!-- JavaScript -->
   <script>
-    const formS2T = document.getElementById('audioForm');
-    const fileInput = document.getElementById('audioFile');
-    const outputS2T = document.getElementById('outputS2T');
-    const resultsS2T = document.getElementById('resultsS2T');
+    const form = document.getElementById('audioForm');
+    const output = document.getElementById('output');
+    const results = document.getElementById('results');
     const speechToText = document.getElementById('speechToText');
     const emotionResult = document.getElementById('emotionResult');
+    const fileInput = document.getElementById('audioFile');
 
-    formS2T.onsubmit = async (event) => {
+    form.onsubmit = async (event) => {
       event.preventDefault();
 
       if (fileInput.files.length === 0) {
-        outputS2T.textContent = 'Please select an audio file.';
+        output.textContent = 'Please select an audio file.';
+        results.classList.add('hidden');
         return;
       }
 
       const formData = new FormData();
       formData.append('audio2', fileInput.files[0]);
 
-      outputS2T.textContent = 'Processing...';
-      resultsS2T.classList.add('hidden');
+      output.textContent = 'Processing audio...';
+      results.classList.add('hidden');
 
       try {
         const response = await fetch('/textemotionpredict', {
@@ -86,21 +108,35 @@
 
         if (!response.ok) {
           const errorData = await response.json();
-          outputS2T.textContent = 'Error: ' + (errorData.error || 'Something went wrong');
+          output.textContent = 'Error: ' + (errorData.error || 'Something went wrong');
+          results.classList.add('hidden');
           return;
         }
 
         const data = await response.json();
+
         speechToText.textContent = data.speech_to_text || 'No transcription available.';
         emotionResult.textContent = data.emotion || 'No emotion detected.';
         
-        outputS2T.textContent = 'Success! See results below.';
-        resultsS2T.classList.remove('hidden');
+        output.textContent = 'Success! See results below.';
+        results.classList.remove('hidden');
       } catch (error) {
-        outputS2T.textContent = 'Error: ' + error.message;
+        output.textContent = 'Error: ' + error.message;
+        results.classList.add('hidden');
       }
     };
   </script>
+
+  <!-- Simple animation -->
+  <style>
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 
 </body>
 </html>
