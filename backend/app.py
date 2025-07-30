@@ -1,10 +1,10 @@
 
 from flask import Flask, request, jsonify, render_template
-from tensorflow import keras
+
+
 import numpy as np
 import librosa
 import io
-import cv2 
 import librosa.display
 import matplotlib
 
@@ -16,7 +16,7 @@ import base64
 import tempfile
 import torch
 
-
+import keras
 
 from src.unet import UNet  # Adjust the import based on your project structure  
 from src.binary_preprocess import binary_preprocess_audio
@@ -27,7 +27,10 @@ from src.english_preprocess import english_preprocess_audio, mel_to_audio_eng
 
 app = Flask(__name__, template_folder='../frontend')
 
-multiclass_pred_model = keras.models.load_model('backend/models/multiclass_pred_model.keras')
+from keras.models import load_model
+
+multiclass_pred_model = load_model('backend/models/multiclass_pred_model.keras', compile=False)
+
 binaryclass_pred_model = keras.models.load_model('backend/models/dysarthria_model_eng.keras')
 
 
@@ -142,7 +145,7 @@ def binary_predict():
     })
 
 
-
+'''
 @app.route('/emotionenglishpredict', methods=['POST'])
 def transcribe_audio(audio_path):
     result = asr_pipeline(audio_path)
@@ -151,8 +154,8 @@ def transcribe_audio(audio_path):
     emotions = ["happy", "sad", "angry", "neutral", "fearful", "disgusted", "surprised"]
     result = emotion_classifier(result["text"], candidate_labels=emotions)
     return result["labels"][0], result  # top emotion & confidence
+'''
 
- 
 @app.route('/russianpredict', methods=['POST'])
 def predict_russian():
     try:
@@ -217,7 +220,6 @@ def predict_russian():
 import matplotlib
 matplotlib.use('Agg') 
 import matplotlib.pyplot as plt
-
 @app.route('/englishpredict', methods=['POST'])
 def predict_english():
     try:
@@ -227,7 +229,7 @@ def predict_english():
         file = request.files['audio']
 
         # Step 1: Preprocess
-        spectrogram = english_preprocess_audio(file)  # (1, 1, 128, 128)
+        spectrogram, original_spectrogram = english_preprocess_audio(file)
         spectrogram_tensor = torch.tensor(spectrogram).float().to(device='cpu')
 
         # Step 2: Predict
@@ -235,8 +237,8 @@ def predict_english():
         with torch.no_grad():
             pred_tensor = english_pred_model(spectrogram_tensor).cpu().numpy()
 
-        pred_spectrogram = np.squeeze(pred_tensor)  # (128, 128)
-        input_spectrogram = np.squeeze(spectrogram_tensor.cpu().numpy())  # (128, 128)
+        pred_spectrogram = np.squeeze(pred_tensor)
+        input_spectrogram = np.squeeze(spectrogram_tensor.cpu().numpy())
 
         # Step 3: Convert prediction to waveform
         wav = mel_to_audio_eng(pred_spectrogram)
@@ -245,8 +247,8 @@ def predict_english():
         audio_buf.seek(0)
         audio_base64 = base64.b64encode(audio_buf.read()).decode('utf-8')
 
-        # Step 4: Plot input spectrogram with librosa
-        input_dB = input_spectrogram * 80 - 80
+        # Step 4: Plot full input spectrogram (not cropped one!)
+        input_dB = original_spectrogram * 80 - 80
         fig1, ax1 = plt.subplots()
         img1 = librosa.display.specshow(input_dB, sr=16000, x_axis='time', y_axis='mel', ax=ax1)
         ax1.set_title("Input: Dysarthric")
@@ -257,7 +259,7 @@ def predict_english():
         buf1.seek(0)
         input_base64 = base64.b64encode(buf1.read()).decode('utf-8')
 
-        # Step 5: Plot predicted clean spectrogram
+        # Step 5: Plot predicted spectrogram
         pred_dB = pred_spectrogram * 80 - 80
         fig2, ax2 = plt.subplots()
         img2 = librosa.display.specshow(pred_dB, sr=16000, x_axis='time', y_axis='mel', ax=ax2)
@@ -269,7 +271,6 @@ def predict_english():
         buf2.seek(0)
         pred_base64 = base64.b64encode(buf2.read()).decode('utf-8')
 
-        # Final return
         return jsonify({
             'spectrogram_image': input_base64,
             'predicted_spectrogram_image': pred_base64,
@@ -279,3 +280,7 @@ def predict_english():
     except Exception as e:
         print("INTERNAL ERROR:", e)
         return jsonify({'error': str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
