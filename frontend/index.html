@@ -5,83 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dysarthria Diagnosis App</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounceDown {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+    .animate-fadeInUp {
+      animation: fadeInUp 1s ease-out forwards;
+    }
+    .animate-bounceDown {
+      animation: bounceDown 2s infinite;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-gradient-to-br from-blue-50 to-white text-gray-800 font-sans">
 
-  <!-- Header -->
-  <header class="bg-white shadow py-6 mb-10">
-    <h1 class="text-4xl font-extrabold text-blue-600 text-center">Dysarthria Diagnosis App</h1>
-    <p class="text-center mt-2 text-gray-600 text-lg">
-      Using AI to assist with speech disorder diagnosis and treatment
-    </p>
-  </header>
-
-  <!-- Introduction -->
-  <section class="max-w-3xl mx-auto px-6 mb-10">
-    <p class="text-lg leading-relaxed">
-      In this project, our goal is to use machine learning to detect dysarthria from speech across three different languages,
-      to classify its severity using spectrogram data, detect the emotion of a signal, and see if we can convert a dysarthric
-      speech signal to nondysarthric speech using generative models. This could aid clinicians in both diagnosis and ongoing assessment.
-    </p>
+  <!-- Hero Landing Section -->
+  <section class="h-screen w-full bg-gradient-to-br from-blue-600 to-blue-400 flex flex-col justify-center items-center text-white text-center px-4">
+    <div class="animate-fadeInUp">
+      <h1 class="text-6xl font-extrabold drop-shadow-lg mb-4">Dysarthria Diagnosis App</h1>
+      <p class="text-xl max-w-2xl mx-auto">AI tools to diagnose and assist treatment of speech disorders</p>
+    </div>
+    <a href="#app" class="mt-12 animate-bounceDown bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow-lg hover:bg-blue-100 transition duration-300">
+      Learn More ↓
+    </a>
   </section>
 
-  <!-- Buttons Section -->
-<section class="max-w-2xl mx-auto px-6 grid gap-6 pb-32">
-    <!-- Binary Classification -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Diagnose Dysarthria</h2>
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-              onclick="openBinary()">
-        Binary Classification
-      </button>
-    </div>
-
-    <!-- Severity Classification -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Determine Dysarthria Severity</h2>
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-              onclick="openSeverity()">
-        Severity Classification
-      </button>
-    </div>
-
-    <!-- English Features -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">English Speech Tools</h2>
-      <p class="text-gray-600 mb-2 text-sm">Speech to Text, Voice Cloning, Emotion Detection</p>
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-              onclick="openEnglish()">
-        English
-      </button>
-    </div>
-
-    <!-- Russian Speech Generation -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Russian Clean Speech Generation</h2>
-      <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-              onclick="openRussian()">
-        Russian
-      </button>
+  <!-- About Section -->
+  <section id="app" class="max-w-4xl mx-auto px-6 mt-20 mb-40 opacity-0 animate-fadeInUp scroll-mt-20" style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+    <div class="bg-white shadow-2xl rounded-3xl p-10 space-y-6">
+      <h2 class="text-4xl font-bold text-blue-600">About the Project</h2>
+      <p class="text-lg text-gray-700">
+        This app utilizes advanced AI models to support the detection and evaluation of <strong>dysarthria</strong>, a motor speech disorder. By processing speech recordings, we provide insight into severity and potential treatments.
+      </p>
+      <ul class="list-disc list-inside text-gray-700 space-y-1">
+        <li><strong>Binary Classification:</strong> Detect if dysarthria is present</li>
+        <li><strong>Severity Analysis:</strong> Classify the level of severity</li>
+        <li><strong>English Feature Tools:</strong> Transcription, voice cloning, emotion detection</li>
+        <li><strong>Russian Model:</strong> Clean speech generation using GANs</li>
+      </ul>
+      <a href="https://github.com/sofiebudman/Dysarthria_App" target="_blank" class="inline-block mt-6 text-blue-600 hover:underline font-medium text-lg">View on GitHub →</a>
     </div>
   </section>
 
-  <!-- Scripts -->
-  <script>
-    function openBinary() {
-      window.location.href = "{{ url_for('classification') }}";
-    }
-    function openSeverity() {
-      window.location.href = "{{ url_for('multiclass') }}";
-    }
-    function openEnglish() {
-      window.location.href = "{{ url_for('english') }}";
-    }
-    function openRussian() {
-      window.location.href = "{{ url_for('russian') }}";
-    }
-  </script>
-
-
+  <!-- Bottom Navigation Bar -->
 
 <div class="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 dark:bg-gray-700 dark:border-gray-600">
     <div class="grid h-full max-w-lg grid-cols-4 mx-auto font-medium">
@@ -133,15 +107,22 @@
    
 </svg>
 
-        
-       
-    </div>
-</div>
 
+  <!-- Scripts -->
+  <script>
+    function openBinary() {
+      window.location.href = "{{ url_for('classification') }}";
+    }
+    function openSeverity() {
+      window.location.href = "{{ url_for('multiclass') }}";
+    }
+    function openEnglish() {
+      window.location.href = "{{ url_for('english') }}";
+    }
+    function openRussian() {
+      window.location.href = "{{ url_for('russian') }}";
+    }
+  </script>
 
 </body>
-
-
-
-
 </html>

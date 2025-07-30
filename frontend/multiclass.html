@@ -1,17 +1,50 @@
 <!DOCTYPE html>
-
 <html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dysarthria Multiclass Detection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
 
-<h1>Multiclass Prediction</h1>
+  
+  <!-- Header -->
+  <header class="bg-white shadow py-6 mb-10">
+    <h1 class="text-4xl font-extrabold text-blue-600 text-center">Dysarthria Severity Detection</h1>
+    <p class="text-center mt-2 text-gray-600 text-lg">
+      Upload an audio file to predict Dysarthria severity 
+    </p>
+  </header>
 
-<p>Upload an audio file to predict the dysarthria class.</p>
-
- <form id="audioForm" enctype="multipart/form-data">
-    <input type="file" id="audioFile" name="audio" accept="audio/wav" required>
-    <button type="submit">Predict</button>
+  <form id="audioForm" enctype="multipart/form-data" class="flex flex-col items-center space-y-4 p-6 bg-white shadow-md rounded-xl max-w-md mx-auto">
+  <label for="audioFile" class="text-lg font-medium text-gray-700">Upload a WAV file:</label>
+  <input 
+    type="file" 
+    id="audioFile" 
+    name="audio" 
+    accept="audio/wav" 
+    required
+    class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 
+           file:rounded-full file:border-0 
+           file:text-sm file:font-semibold 
+           file:bg-blue-50 file:text-blue-700 
+           hover:file:bg-blue-100"
+  >
+  <button 
+    type="submit" 
+    class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"
+  >
+    Predict
+  </button>
 </form>
 
- <p id="output" style="font-weight: bold; margin-top: 20px;"></p>
+
+
+<section class="max-w-3xl mx-auto px-6 mb-10">
+  <p id="output" class="text-xl font-semibold mb-4 text-center"></p>
+</section>
+
  <img src="data:image/png;base64,{{ heatmap_image }}">
 
 <script>
