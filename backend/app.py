@@ -226,7 +226,18 @@ def predict_english():
         if 'audio' not in request.files:
             return jsonify({'error': 'No audio file provided'}), 400
 
+        
         file = request.files['audio']
+
+        # Step 0: Read original audio file
+
+        file_bytes = file.read()
+        file.seek(0)  # reset pointer for reuse
+        audio_data, sr = sf.read(io.BytesIO(file_bytes))
+        original_buf = io.BytesIO()
+        sf.write(original_buf, audio_data, sr, format='WAV')
+        original_buf.seek(0)
+        original_base64 = base64.b64encode(original_buf.read()).decode('utf-8')
 
         # Step 1: Preprocess
         spectrogram, original_spectrogram = english_preprocess_audio(file)
@@ -246,6 +257,8 @@ def predict_english():
         sf.write(audio_buf, wav, 16000, format='WAV')
         audio_buf.seek(0)
         audio_base64 = base64.b64encode(audio_buf.read()).decode('utf-8')
+
+
 
         # Step 4: Plot full input spectrogram (not cropped one!)
         input_dB = original_spectrogram * 80 - 80
@@ -274,7 +287,9 @@ def predict_english():
         return jsonify({
             'spectrogram_image': input_base64,
             'predicted_spectrogram_image': pred_base64,
-            'clean_audio': audio_base64
+            'clean_audio': audio_base64,
+            'original_audio': original_base64 
+
         })
 
     except Exception as e:

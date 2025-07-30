@@ -7,7 +7,7 @@
 
 <body>
 <h1>English Dysarthria Cleaner</h1>
-<p>Upload a dysarthric Russian audio file (.wav) to get a cleaned version and see its spectrograms.</p>
+<p>Upload a dysarthric English audio file (.wav) to get a cleaned version and see its spectrograms.</p>
 
 <form id="audioForm" enctype="multipart/form-data">
   <input type="file" id="audioFile" name="audio" accept="audio/wav" required>
@@ -23,6 +23,11 @@
   <h3>Predicted Clean Spectrogram</h3>
   <img id="predictedSpectrogram" src="" alt="Clean Spectrogram" style="max-width: 300px;"><br>
 
+
+
+  <h3>Original Audio</h3>
+  <audio id="originalAudio" controls></audio>
+ 
   <h3>Clean Audio</h3>
   <audio id="cleanAudio" controls></audio>
 </div>
@@ -34,6 +39,9 @@
   const originalImg = document.getElementById('originalSpectrogram');
   const predictedImg = document.getElementById('predictedSpectrogram');
   const cleanAudio = document.getElementById('cleanAudio');
+  const originalAudio = document.getElementById('originalAudio');
+
+
 
   form.onsubmit = async (event) => {
     event.preventDefault();
@@ -67,6 +75,7 @@
       originalImg.src = 'data:image/png;base64,' + data.spectrogram_image;
       predictedImg.src = 'data:image/png;base64,' + data.predicted_spectrogram_image;
       cleanAudio.src = 'data:audio/wav;base64,' + data.clean_audio;
+      originalAudio.src = 'data:audio/wav;base64,' + data.original_audio;
 
       output.textContent = 'Success! See results below.';
       results.style.display = 'block';
