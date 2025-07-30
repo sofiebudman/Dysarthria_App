@@ -1,94 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>English Speech Cleaner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Speech Reconstruction</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-gray-100 text-gray-800 font-sans">
 
-<body>
-<h1>English Dysarthria Cleaner</h1>
-<p>Upload a dysarthric English audio file (.wav) to get a cleaned version and see its spectrograms.</p>
+  <!-- Header -->
+  <header class="bg-white shadow py-6 mb-10">
+    <h1 class="text-4xl font-extrabold text-blue-600 text-center">English Speech Reconstruction</h1>
+    <p class="text-center mt-2 text-gray-600 text-lg">
+      Upload a dysarthric English audio file (.wav) to get a cleaned version and see its spectrograms.
+    </p>
+  </header>
 
-<form id="audioForm" enctype="multipart/form-data">
-  <input type="file" id="audioFile" name="audio" accept="audio/wav" required>
-  <button type="submit">Predict</button>
-</form>
+  <!-- Upload Form -->
+  <form id="audioForm" enctype="multipart/form-data" class="flex flex-col items-center space-y-4 p-6 bg-white shadow-lg rounded-xl max-w-md mx-auto">
+    <label for="audioFile" class="text-lg font-medium text-gray-700">Upload a WAV file:</label>
+    <input 
+      type="file" 
+      id="audioFile" 
+      name="audio" 
+      accept="audio/wav" 
+      required
+      class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 
+             file:rounded-full file:border-0 
+             file:text-sm file:font-semibold 
+             file:bg-blue-50 file:text-blue-700 
+             hover:file:bg-blue-100"
+    >
+    <button 
+      type="submit" 
+      class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"
+    >
+      Predict
+    </button>
+    <p id="output" class="font-semibold text-center text-blue-600 mt-2"></p>
+  </form>
 
-<p id="output" style="font-weight: bold; margin-top: 20px;"></p>
+  <!-- Results Section -->
+  <div id="results" class="max-w-3xl mx-auto mt-10 p-6 bg-white shadow-md rounded-xl space-y-6 hidden">
+    <div class="text-center">
+      <h2 class="text-2xl font-bold text-gray-800">Spectrograms</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="text-center">
+        <h3 class="font-semibold text-gray-700 mb-2">Original Spectrogram</h3>
+        <img id="originalSpectrogram" src="" alt="Original Spectrogram" class="mx-auto max-w-full rounded-lg border">
+      </div>
+      <div class="text-center">
+        <h3 class="font-semibold text-gray-700 mb-2">Predicted Clean Spectrogram</h3>
+        <img id="predictedSpectrogram" src="" alt="Clean Spectrogram" class="mx-auto max-w-full rounded-lg border">
+      </div>
+    </div>
 
-<div id="results" style="display:none; margin-top: 20px;">
-  <h3>Original Spectrogram</h3>
-  <img id="originalSpectrogram" src="" alt="Original Spectrogram" style="max-width: 300px;"><br>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="text-center">
+        <h3 class="font-semibold text-gray-700 mb-2">Original Audio</h3>
+        <audio id="originalAudio" controls class="w-full"></audio>
+      </div>
+      <div class="text-center">
+        <h3 class="font-semibold text-gray-700 mb-2">Clean Audio</h3>
+        <audio id="cleanAudio" controls class="w-full"></audio>
+      </div>
+    </div>
+  </div>
 
-  <h3>Predicted Clean Spectrogram</h3>
-  <img id="predictedSpectrogram" src="" alt="Clean Spectrogram" style="max-width: 300px;"><br>
+  <!-- JavaScript -->
+  <script>
+    const form = document.getElementById('audioForm');
+    const output = document.getElementById('output');
+    const results = document.getElementById('results');
+    const originalImg = document.getElementById('originalSpectrogram');
+    const predictedImg = document.getElementById('predictedSpectrogram');
+    const cleanAudio = document.getElementById('cleanAudio');
+    const originalAudio = document.getElementById('originalAudio');
 
+    form.onsubmit = async (event) => {
+      event.preventDefault();
 
-
-  <h3>Original Audio</h3>
-  <audio id="originalAudio" controls></audio>
- 
-  <h3>Clean Audio</h3>
-  <audio id="cleanAudio" controls></audio>
-
-
-
-
-</div>
-
-<script>
-  const form = document.getElementById('audioForm');
-  const output = document.getElementById('output');
-  const results = document.getElementById('results');
-  const originalImg = document.getElementById('originalSpectrogram');
-  const predictedImg = document.getElementById('predictedSpectrogram');
-  const cleanAudio = document.getElementById('cleanAudio');
-  const originalAudio = document.getElementById('originalAudio');
- 
-
-
-
-  form.onsubmit = async (event) => {
-    event.preventDefault();
-
-    const fileInput = document.getElementById('audioFile');
-    if (fileInput.files.length === 0) {
-      output.textContent = 'Please select an audio file.';
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('audio', fileInput.files[0]);
-
-    output.textContent = 'Processing...';
-    results.style.display = 'none';
-
-    try {
-      const response = await fetch('/englishpredict', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        output.textContent = 'Error: ' + (errorData.error || 'Something went wrong');
+      const fileInput = document.getElementById('audioFile');
+      if (fileInput.files.length === 0) {
+        output.textContent = 'Please select an audio file.';
         return;
       }
 
-      const data = await response.json();
+      const formData = new FormData();
+      formData.append('audio', fileInput.files[0]);
 
-      originalImg.src = 'data:image/png;base64,' + data.spectrogram_image;
-      predictedImg.src = 'data:image/png;base64,' + data.predicted_spectrogram_image;
-      cleanAudio.src = 'data:audio/wav;base64,' + data.clean_audio;
-      originalAudio.src = 'data:audio/wav;base64,' + data.original_audio;
-     
-      output.textContent = 'Success! See results below.';
-      results.style.display = 'block';
+      output.textContent = 'Processing...';
+      results.classList.add('hidden');
 
-    } catch (error) {
-      output.textContent = 'Error: ' + error.message;
-    }
-  };
-</script>
+      try {
+        const response = await fetch('/englishpredict', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          output.textContent = 'Error: ' + (errorData.error || 'Something went wrong');
+          return;
+        }
+
+        const data = await response.json();
+
+        originalImg.src = 'data:image/png;base64,' + data.spectrogram_image;
+        predictedImg.src = 'data:image/png;base64,' + data.predicted_spectrogram_image;
+        cleanAudio.src = 'data:audio/wav;base64,' + data.clean_audio;
+        originalAudio.src = 'data:audio/wav;base64,' + data.original_audio;
+
+        output.textContent = 'Success! See results below.';
+        results.classList.remove('hidden');
+
+      } catch (error) {
+        output.textContent = 'Error: ' + error.message;
+      }
+    };
+  </script>
+
 </body>
 </html>

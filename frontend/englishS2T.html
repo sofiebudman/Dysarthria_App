@@ -1,36 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Speech to Text + Emotion Analyzer</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Speech to Text and Emotion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
 
-<body>
-  <h1>Speech to Text + Emotion Analysis</h1>
-  <p>Upload an English audio file (.wav) to get its transcription and emotion prediction.</p>
+  <header class="bg-white shadow py-6 mb-10">
+    <h1 class="text-4xl font-extrabold text-blue-600 text-center">Speech to Text & Emotion Analysis</h1>
+    <p class="text-center mt-2 text-gray-600 text-lg">
+      Upload an English audio file (.wav) to get its transcription and emotion prediction.
+    </p>
+  </header>
 
-  <!-- Upload Form -->
-  <form id="audioFormS2T" enctype="multipart/form-data">
-    <input type="file" id="audioFileS2T" name="audio2" accept="audio/wav" required>
-    <button type="submit">Predict</button>
+  <form id="audioForm" enctype="multipart/form-data" class="flex flex-col items-center space-y-4 p-6 bg-white shadow-lg rounded-xl max-w-md mx-auto">
+    <label for="audioFile" class="text-lg font-medium text-gray-700">Upload a WAV file:</label>
+    <input 
+      type="file" 
+      id="audioFile" 
+      name="audio" 
+      accept="audio/wav" 
+      required
+      class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 
+             file:rounded-full file:border-0 
+             file:text-sm file:font-semibold 
+             file:bg-blue-50 file:text-blue-700 
+             hover:file:bg-blue-100"
+    >
+    <button 
+      type="submit" 
+      class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"
+    >
+      Predict
+    </button>
+    <p id="output" class="font-semibold text-center text-blue-600 mt-2"></p>
   </form>
 
-  <!-- Status / Errors -->
-  <p id="outputS2T" style="font-weight: bold; margin-top: 20px;"></p>
+  <div class="max-w-xl mx-auto mt-10 px-6">
+    <p id="outputS2T" class="text-center text-lg font-semibold text-blue-700"></p>
 
-  <!-- Result Area -->
-  <div id="resultsS2T" style="display: none; margin-top: 20px;">
-    <h3>Speech to Text</h3>
-    <p id="speechToText"></p>
+    <div id="resultsS2T" class="mt-6 hidden bg-white p-6 rounded-xl shadow-lg">
+      <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Results</h3>
 
-    <h3>Emotion Result</h3>
-    <p id="emotionResult"></p>
+      <div class="mb-4">
+        <h4 class="text-lg font-semibold text-gray-700">Speech to Text:</h4>
+        <p id="speechToText" class="text-gray-900 mt-1"></p>
+      </div>
+
+      <div>
+        <h4 class="text-lg font-semibold text-gray-700">Emotion Detected:</h4>
+        <p id="emotionResult" class="text-gray-900 mt-1"></p>
+      </div>
+    </div>
   </div>
 
-  <!-- Script -->
   <script>
-    const formS2T = document.getElementById('audioFormS2T');
-    const fileInput = document.getElementById('audioFileS2T');
+    const formS2T = document.getElementById('audioForm');
+    const fileInput = document.getElementById('audioFile');
     const outputS2T = document.getElementById('outputS2T');
     const resultsS2T = document.getElementById('resultsS2T');
     const speechToText = document.getElementById('speechToText');
@@ -48,7 +76,7 @@
       formData.append('audio2', fileInput.files[0]);
 
       outputS2T.textContent = 'Processing...';
-      resultsS2T.style.display = 'none';
+      resultsS2T.classList.add('hidden');
 
       try {
         const response = await fetch('/textemotionpredict', {
@@ -63,15 +91,16 @@
         }
 
         const data = await response.json();
-        speechToText.textContent = data.speech_to_text;
-        emotionResult.textContent = data.emotion;
-
+        speechToText.textContent = data.speech_to_text || 'No transcription available.';
+        emotionResult.textContent = data.emotion || 'No emotion detected.';
+        
         outputS2T.textContent = 'Success! See results below.';
-        resultsS2T.style.display = 'block';
+        resultsS2T.classList.remove('hidden');
       } catch (error) {
         outputS2T.textContent = 'Error: ' + error.message;
       }
     };
   </script>
+
 </body>
 </html>

@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "ffmpeg>=1.4",
     "flask>=3.1.1",
     "ipython>=8.37.0",
     "jsonify>=0.5",
@@ -15,5 +16,6 @@ dependencies = [
     "requests>=2.32.4",
     "tensorflow>=2.19.0",
     "torch>=2.7.1",
+    "torchaudio>=2.7.1",
     "transformers>=4.54.1",
 ]
