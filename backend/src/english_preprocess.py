@@ -1,4 +1,3 @@
-import cv2
 from IPython.display import Audio
 import soundfile as sf
 import librosa
@@ -6,28 +5,26 @@ import scipy.ndimage
 import librosa
 import numpy as np
 import io
+import torch.nn.functional as F
+import torch 
 
 
 def english_preprocess_audio(file):
-    # Load uploaded audio file
     audio_bytes = file.read()
     audio_buffer = io.BytesIO(audio_bytes)
     y, sr = librosa.load(audio_buffer, sr=None)
 
-    # Generate mel spectrogram → dB scale → normalize to [0, 1]
-    S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=512, n_mels=128)
-    S_dB = librosa.power_to_db(S, ref=np.max)
-    S_norm = np.clip((S_dB + 80) / 80, 0, 1)
+    # Full mel spectrogram
+    full_S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=1024, hop_length=512, n_mels=128)
+    full_S_dB = librosa.power_to_db(full_S, ref=np.max)
+    full_S_norm = np.clip((full_S_dB + 80) / 80, 0, 1)  # shape: (128, T)
 
-    # Pad or trim to fixed shape (128, 128)
-    if S_norm.shape[1] < 128:
-        pad_width = 128 - S_norm.shape[1]
-        S_norm = np.pad(S_norm, ((0, 0), (0, pad_width)), mode='constant')
-    else:
-        S_norm = S_norm[:, :128]
+    # Resize to (128, 128) with bilinear interpolation (like training)
+    tensor = torch.tensor(full_S_norm).unsqueeze(0).unsqueeze(0)  # (1, 1, 128, T)
+    resized = F.interpolate(tensor, size=(128, 128), mode='bilinear', align_corners=False)
+    cropped = resized.squeeze().numpy()  # shape (128, 128)
 
-    # Return shape: (1, 1, 128, 128)
-    return S_norm[np.newaxis, np.newaxis, :, :]
+    return cropped[np.newaxis, np.newaxis, :, :], full_S_norm
 
 import librosa
 import numpy as np
