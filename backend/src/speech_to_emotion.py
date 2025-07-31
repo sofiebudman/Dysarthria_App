@@ -7,13 +7,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 tokenizer = AutoTokenizer.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
 model = AutoModelForSequenceClassification.from_pretrained("j-hartmann/emotion-english-distilroberta-base")
-import os
-from huggingface_hub import InferenceClient
-os.environ['HF_TOKEN'] = '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'
-client = InferenceClient(
-    provider="auto",
-    api_key=os.environ["HF_TOKEN"],
-)
+
 
 def text_to_speech_emotion(audio,asr_pipeline):
     # 1. ASR Pipeline
