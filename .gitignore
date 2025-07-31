@@ -13,3 +13,6 @@ backend/src/__pycache__/__init__.cpython-312.pyc
 backend/src/__pycache__/unet.cpython-312.pyc
 backend/src/__pycache__/english_preprocess.cpython-312.pyc
 backend/src/__pycache__/english_preprocess.cpython-312.pyc
+backend/src/__pycache__/english_preprocess.cpython-312.pyc
+backend/src/__pycache__/speech_to_emotion.cpython-312.pyc
+backend/src/__pycache__/speech_to_emotion.cpython-312.pyc
