@@ -39,6 +39,7 @@ asr_pipeline = pipeline(
     framework="pt"
 )
 
+
 app = Flask(__name__, template_folder='../frontend')
 
 from keras.models import load_model
@@ -348,7 +349,9 @@ def predict_text_emotion():
         # Step 1: Preprocess
         spectrogram, original_spectrogram, y = english_preprocess_audio(file)
         emotion_result, text = text_to_speech_emotion(y, asr_pipeline)
-        clean_text = text['sequence'].split('.jpg')[0].strip()
+        print("Emotion Result:", emotion_result)
+        print("Text Result:", text)
+        clean_text = text['text'].split('.jpg')[0].strip()
         return jsonify({
             'speech_to_text': clean_text,
             'emotion': emotion_result
